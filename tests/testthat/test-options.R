@@ -53,3 +53,88 @@ test_that("options Test 4: xportr.order_verbose can be set", {
   expect_silent(xportr_options(xportr.order_verbose = "warn"))
   expect_equal(getOption("xportr.order_verbose"), "warn")
 })
+
+## Test 5: Global option is correctly overridden by the following `xportr_metadata` verbose argument ----
+test_that("options Test 5: Global option is correctly overridden by the following `xportr_metadata` verbose argument", {
+  # Save original options to restore later
+  old_options <- options()
+  on.exit(options(old_options), add = TRUE, after = FALSE)
+
+  # Test dataset and metadata
+  adsl <- data.frame(
+    USUBJID = c("1001", "1002", "1003")
+  )
+
+  metadata <- data.frame(
+    dataset = "ADSL",
+    variable = "USUBJID",
+    type = "logical"
+  )
+
+  # Configure the global option
+  xportr_options(xportr.type_verbose = "warn")
+
+  # The snapshot should capture the type coercion issue as a "message"
+  expect_snapshot(
+    adsl %>%
+      xportr_metadata(metadata, "ADSL", verbose = "message") %>%
+      xportr_type()
+  )
+})
+
+## Test 6: Both `xportr_metadata` verbose and global option are correctly overridden by the following function parameter ----
+test_that("options Test 6: Both `xportr_metadata` verbose and global option are correctly overridden by the following function parameter", {
+  # Save original options to restore later
+  old_options <- options()
+  on.exit(options(old_options), add = TRUE, after = FALSE)
+
+  # Test dataset and metadata
+  adsl <- data.frame(
+    USUBJID = c("1001", "1002", "1003")
+  )
+
+  metadata <- data.frame(
+    dataset = "ADSL",
+    variable = "USUBJID",
+    type = "logical"
+  )
+
+  # Configure the global option
+  xportr_options(xportr.type_verbose = "warn")
+
+  # The snapshot should capture the type coercion issue as an "error"
+  expect_snapshot(
+    adsl %>%
+      xportr_metadata(metadata, "ADSL", verbose = "message") %>%
+      xportr_type(verbose = "stop"),
+    error = TRUE # generates snapshot despite errors
+  )
+})
+
+## Test 7: Global option is correctly used when verbose is not specified otherwise ----
+test_that("options Test 7: Global option is correctly used when verbose is not specified otherwise", {
+  # Save original options to restore later
+  old_options <- options()
+  on.exit(options(old_options), add = TRUE, after = FALSE)
+
+  # Test dataset and metadata
+  adsl <- data.frame(
+    USUBJID = c("1001", "1002", "1003")
+  )
+
+  metadata <- data.frame(
+    dataset = "ADSL",
+    variable = "USUBJID",
+    type = "logical"
+  )
+
+  # Configure the global option
+  xportr_options(xportr.type_verbose = "none")
+
+  # The snapshot should not notify the users of the type coercion issue
+  expect_snapshot(
+    adsl %>%
+      xportr_metadata(metadata, "ADSL") %>%
+      xportr_type()
+  )
+})
