@@ -513,3 +513,50 @@ test_that("xportr_type() errors on non-data-frame input (via group_data_check)",
     xportr_type(1:5, metadata = metadata, domain = "ADSL", verbose = "warn")
   )
 })
+
+## Test 13: Length and format attributes are correctly applied after type coercion ----
+test_that("type Test 13: Length and format attributes are correctly applied after type coercion", {
+  # Test dataset and metadata
+  adsl <- data.frame(
+    USUBJID = c("998", "999", "1000"),
+    AGE = c(63, 35, 27),
+    TRTSDT = as.Date(c("2023-01-01", "2023-01-02", "2023-01-03"))
+  )
+
+  # Since length values are not specified below, it will be set to maximum data
+  # length for character columns, and 8 for non-character columns
+  metadata <- data.frame(
+    dataset = "ADSL",
+    variable = c("USUBJID", "AGE", "TRTSDT"),
+    type = c("character", "numeric", "numeric"),
+    length = NA,
+    format = c(NA, NA, "DATE9.")
+  )
+
+  # Assign length and format after type coercion
+  result <- suppressMessages(
+    adsl %>%
+      xportr_metadata(metadata, "ADSL", verbose = "none") %>%
+      xportr_type() %>%
+      xportr_length() %>%
+      xportr_format()
+  )
+
+  # Verify all types, widths(lengths), and format attributes are correct
+  # `USUBJID` is specified as "character" in metadata
+  expect_type(result$USUBJID, "character")
+
+  # "double", which is an instance of "numeric", is expected for `AGE` and `TRTSDT`
+  expect_type(result$AGE, "double")
+  expect_type(result$TRTSDT, "double")
+
+  # 4 is expected for USUBJID (character) based on max length ("1000" has 4 characters)
+  expect_equal(attr(result$USUBJID, "width"), 4)
+
+  # 8 is expected for AGE and TRTSDT (non-character variables)
+  expect_equal(attr(result$AGE, "width"), 8)
+  expect_equal(attr(result$TRTSDT, "width"), 8)
+
+  # DATE9. format should be applied from metadata to TRTSDT after type coercion
+  expect_equal(attr(result$TRTSDT, "format.sas"), "DATE9.")
+})
