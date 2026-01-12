@@ -859,3 +859,34 @@ test_that("metadata Test 34: results match traditional results", {
     read_xpt(trad_path)
   )
 })
+
+## Test 35: attributes are preserved through complete transformation pipeline ----
+test_that("metadata Test 35: attributes are preserved through complete transformation pipeline", {
+  data("var_spec", "dataset_spec", "adsl_xportr", envir = environment())
+  adsl <- adsl_xportr
+
+  dataset_spec_low <- setNames(dataset_spec, tolower(names(dataset_spec)))
+  names(dataset_spec_low)[[2]] <- "label"
+
+  var_spec_low <- setNames(var_spec, tolower(names(var_spec)))
+  names(var_spec_low)[[5]] <- "type"
+
+  # Complete transformation pipeline with metadata context
+  metadata_pipeline <- suppressMessages(
+    adsl %>%
+      xportr_metadata(var_spec_low, "ADSL", verbose = "message") %>%
+      xportr_type() %>%
+      xportr_length() %>%
+      xportr_label() %>%
+      xportr_order() %>%
+      xportr_format() %>%
+      xportr_df_label(dataset_spec_low)
+  )
+
+  # Verify attributes are preserved through the complete pipeline
+  expect_identical(attr(metadata_pipeline, "label"), dataset_spec_low$label)
+  expect_identical(attr(metadata_pipeline, "_xportr.df_arg_"), "ADSL")
+  expect_identical(attr(metadata_pipeline, "_xportr.df_metadata_"), var_spec_low)
+  expect_identical(attr(metadata_pipeline, "_xportr.df_verbose_"), "message")
+  expect_identical(attr(metadata_pipeline, "class"), attr(adsl, "class"))
+})
