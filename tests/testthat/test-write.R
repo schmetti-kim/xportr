@@ -334,3 +334,83 @@ test_that("xportr_write Test 16: `split_by` attribute is used to split the data"
     1
   )
 })
+
+## Test 17: `xportr_write` validates variable name lengths ----
+test_that("xportr_write Test 17: `xportr_write` validates variable name lengths", {
+  # Create a temporary file that is automatically deleted after the test
+  skip_if_not_installed("withr")
+  tmp <- withr::local_file("test.xpt")
+
+  # Create an invalid dataset by adding a variable whose name exceeds 8 characters
+  adsl <- data.frame(
+    USUBJID = c("1001", "1002", "1003"),
+    VERYLONGVAR = "test"
+  )
+
+  # The snapshot should identify the variable name issue as an error
+  expect_snapshot(
+    adsl %>%
+      xportr_write(tmp, strict_checks = TRUE),
+    error = TRUE
+  )
+})
+
+## Test 18: `xportr_write` validates first characters of variable names ----
+test_that("xportr_write Test 18: `xportr_write` validates first characters of variable names", {
+  # Create a temporary file that is automatically deleted after the test
+  skip_if_not_installed("withr")
+  tmp <- withr::local_file("test.xpt")
+
+  # Create an invalid dataset by adding a variable whose name starts with a dot
+  adsl <- data.frame(
+    USUBJID = c("1001", "1002", "1003"),
+    .VAR = "test"
+  )
+
+  # The snapshot should identify the variable name issue as an error
+  expect_snapshot(
+    adsl %>%
+      xportr_write(tmp, strict_checks = TRUE),
+    error = TRUE
+  )
+})
+
+## Test 19: `xportr_write` detects illegal characters in variable names ----
+test_that("xportr_write Test 19: `xportr_write` detects illegal characters in variable names", {
+  # Create a temporary file that is automatically deleted after the test
+  skip_if_not_installed("withr")
+  tmp <- withr::local_file("test.xpt")
+
+  # Create an invalid dataset by adding a variable whose name contains an illegal character
+  adsl <- data.frame(
+    USUBJID = c("1001", "1002", "1003"),
+    VA_R = "test"
+  )
+
+  # The snapshot should identify the variable name issue as an error
+  expect_snapshot(
+    adsl %>%
+      xportr_write(tmp, strict_checks = TRUE),
+    error = TRUE
+  )
+})
+
+## Test 20: `xportr_write` detects lowercase letters in variable names ----
+test_that("xportr_write Test 20: `xportr_write` detects lowercase letters in variable names", {
+  # Create a temporary file that is automatically deleted after the test
+  skip_if_not_installed("withr")
+  tmp <- withr::local_file("test.xpt")
+
+  # Create an invalid dataset by adding a variable whose name contains a lower case
+  adsl <- data.frame(
+    USUBJID = c("1001", "1002", "1003"),
+    VaR = "test"
+  )
+
+  # The snapshot should identify the variable name issue as an error
+  expect_snapshot(
+    adsl %>%
+      xportr_write(tmp, strict_checks = TRUE),
+    error = TRUE
+  )
+})
